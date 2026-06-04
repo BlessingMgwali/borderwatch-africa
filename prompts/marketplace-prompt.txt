@@ -1,0 +1,273 @@
+Expand BorderWatch Africa into a full two-sided 
+logistics marketplace. Every industry that needs 
+freight moved can post requests. Every transporter 
+can respond and bid.
+
+ADD NEW USER TYPE — CARGO OWNER:
+
+When registering, users choose:
+"I need freight moved" OR "I move freight"
+
+CARGO OWNER registration collects:
+- Company name
+- Industry (dropdown — see list below)
+- Country
+- Typical shipment types
+- Typical routes
+- Monthly shipment volume
+
+INDUSTRY LIST (dropdown on registration):
+Mining & Resources
+Agriculture & Farming
+Food & Beverage
+Retail & FMCG
+Construction & Infrastructure
+Manufacturing
+Pharmaceutical & Medical
+Government & NGO
+Oil & Gas
+Timber & Forestry
+Automotive
+Electronics & Technology
+Chemicals
+Cold Chain & Perishables
+Import & Export (General)
+Other
+
+CARGO OWNER DASHBOARD:
+
+Sidebar navigation:
+- Dashboard
+- Post a Shipment (orange, prominent)
+- My Shipments
+- Active Quotes
+- Shipment History
+- Payments
+- Settings
+
+Dashboard shows:
+- "Good morning, [Name]" greeting
+- Company name + industry badge
+- 4 KPI cards:
+  Active Shipments: 3
+  Quotes Received: 12
+  Completed This Month: 8
+  Total Spent This Month: R84,200
+
+POST A SHIPMENT page:
+This is the core page for cargo owners.
+Show a clean shipment request form:
+
+Step 1 — Cargo Details:
+- Shipment title (text)
+- Industry/cargo type (dropdown):
+  Mining Equipment, Agricultural Produce,
+  General Cargo, Refrigerated Goods,
+  Hazardous Materials, Oversized Load,
+  Bulk Liquid, Livestock, Other
+- Weight (tons) — number input
+- Dimensions (optional) — L x W x H
+- Special requirements checkboxes:
+  ☐ Refrigerated (reefer truck)
+  ☐ Hazardous materials certified
+  ☐ Oversized/abnormal load permit
+  ☐ Armed escort required
+  ☐ GPS tracking required
+  ☐ Insurance required
+
+Step 2 — Route Details:
+- Pickup location (text + country dropdown)
+- Delivery location (text + country dropdown)
+- Pickup date (date picker)
+- Delivery deadline (date picker)
+- Flexibility: Exact date / Within 2 days / 
+  Within a week / Flexible
+
+Step 3 — Budget & Preferences:
+- Budget range: 
+  Under R5,000 / R5,000-R15,000 / 
+  R15,000-R30,000 / R30,000-R60,000 / 
+  R60,000+ / Open to quotes
+- Preferred carrier type:
+  Any / Verified carriers only / 
+  Enterprise carriers only
+- Additional notes (text area)
+
+Step 4 — Review & Post:
+Summary of all details
+Platform fee note: "BorderWatch takes 10% 
+on the confirmed shipment value"
+"Post Shipment Request" orange button
+
+After posting:
+Success screen:
+"Your shipment has been posted!
+Reference: BW-SHP-0234
+Transporters will be notified immediately.
+You will receive quotes within 2-4 hours."
+
+MY SHIPMENTS page:
+Table of all shipments posted:
+
+BW-SHP-0234 | Mining Equipment | 
+JHB → Lusaka | 32t | Posted 2h ago | 
+3 quotes received | ACTIVE | [View Quotes]
+
+BW-SHP-0198 | Agricultural Produce |
+Cape Town → Harare | 15t | Posted 2 days ago |
+Confirmed | IN TRANSIT | [Track]
+
+BW-SHP-0156 | General Cargo |
+Durban → Gaborone | 28t | Completed |
+R22,100 paid | COMPLETED | [Invoice]
+
+ACTIVE QUOTES page:
+When transporters bid on a shipment, 
+cargo owner sees all quotes:
+
+For BW-SHP-0234 (Mining Equipment, JHB → Lusaka):
+
+Quote 1:
+Ndlovu Transport Group ⭐ 4.8 (38 reviews)
+Volvo FH16 · Verified carrier · Business Plan
+Price: R18,400
+Departure: Today 14:00
+ETA: Tomorrow 18:00
+[Accept Quote] [Message Carrier] [Decline]
+
+Quote 2:
+Copperbelt Hauliers ⭐ 4.6 (22 reviews)
+Mercedes Actros · Verified carrier
+Price: R17,200
+Departure: Tomorrow 08:00
+ETA: Day after tomorrow 12:00
+[Accept Quote] [Message Carrier] [Decline]
+
+Quote 3:
+Zimbabwe Freight Co ⭐ 3.9 (8 reviews)
+Scania R450
+Price: R15,800
+Departure: In 2 days
+[Accept Quote] [Message Carrier] [Decline]
+
+When cargo owner accepts a quote:
+Show payment confirmation modal:
+"Confirm Shipment Booking
+Carrier: Ndlovu Transport Group
+Route: JHB → Lusaka
+Shipment value: R18,400
+Platform fee (10%): R1,840
+Total you pay: R18,400
+Carrier receives: R16,560
+BorderWatch receives: R1,840
+[Confirm & Pay] [Cancel]"
+
+RATINGS SYSTEM:
+After delivery, both sides rate each other:
+Cargo owner rates carrier: 1-5 stars + comment
+Carrier rates cargo owner: 1-5 stars + comment
+Ratings appear on profiles
+
+UPDATE TRANSPORTER DASHBOARD:
+Add "Shipment Requests" page to transporter sidebar:
+- Shows all open shipment requests
+- Can filter by: route, weight, industry, 
+  departure date, budget range
+- Each request shows:
+  Industry badge (Mining, Agriculture, etc.)
+  Route + weight + cargo type
+  Budget range
+  Special requirements chips
+  "Submit Quote" orange button
+
+When transporter clicks "Submit Quote":
+Show quote form:
+- Your price (ZAR)
+- Available departure date/time
+- Estimated delivery date/time
+- Truck details (auto-filled from their fleet)
+- Message to cargo owner (optional)
+- "Platform fee reminder: 10% will be deducted"
+- "Submit Quote" button
+
+UPDATE SUPER ADMIN (/admin):
+Add industry breakdown to analytics:
+- Shipments by industry pie chart:
+  Mining 28%, Agriculture 22%, 
+  Retail 18%, Construction 12%, Other 20%
+- Revenue by industry bar chart
+- Most active cargo owners table
+- Most active carriers table
+
+ADD INDUSTRY BADGES throughout the platform:
+Mining — dark gray badge with pickaxe icon
+Agriculture — green badge with leaf icon
+Retail/FMCG — blue badge with shopping icon
+Construction — yellow badge with hard hat icon
+Pharmaceutical — teal badge with cross icon
+Cold Chain — light blue badge with snowflake icon
+Government/NGO — purple badge with building icon
+Oil & Gas — dark orange badge with flame icon
+
+UPDATE REGISTRATION PAGE:
+Step 1 — new first question before everything:
+"I am joining BorderWatch Africa as:"
+Two large cards to choose:
+
+Card 1: 🚛 "A Transport Provider"
+"I own trucks or manage a fleet and 
+want to find freight opportunities"
+[Select This]
+
+Card 2: 📦 "A Cargo Owner"
+"I need to move goods and want to find 
+reliable transporters"
+[Select This]
+
+Based on selection, show relevant 
+registration fields for that user type.
+
+UPDATE HOMEPAGE:
+In the "Built for Every Link in the Chain" 
+customer types section, add these tabs:
+
+Mining Companies:
+"Post equipment and ore shipments instantly. 
+Get quotes from verified heavy-haul specialists 
+within hours. Full chain-of-custody tracking 
+from pit to port."
+Benefits:
+✓ Abnormal load specialist matching
+✓ Hazmat certified carrier verification  
+✓ Multi-border corridor tracking
+✓ Mine-to-port route intelligence
+
+Agriculture:
+"Time your harvest shipments perfectly. 
+Match perishable cargo to reefer trucks 
+before your produce loses value."
+Benefits:
+✓ Reefer truck matching
+✓ Perishable load priority alerts
+✓ Cold chain tracking
+✓ Seasonal border forecasting
+
+Construction:
+"Keep your project sites supplied. 
+Post material and machinery requirements 
+and get matched to available capacity."
+Benefits:
+✓ Oversized load specialists
+✓ Project site delivery coordination
+✓ Equipment transport verification
+✓ Multi-site fleet management
+
+Retailers & FMCG:
+"Maintain your supply chain continuity. 
+Get consistent carriers on your regular 
+routes with performance tracking."
+Benefits:
+✓ Regular route carrier matching
+✓ Delivery performance scoring
+✓ Stock replenishment scheduling
+✓ Distribution network optimization
