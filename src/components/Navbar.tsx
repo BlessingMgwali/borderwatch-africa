@@ -7,8 +7,8 @@ const NAV_LINKS = [
   { label: 'Platform', href: '/#platform' },
   { label: 'Borders', href: '/#borders' },
   { label: 'Fleet', href: '/#fleet' },
-  { label: 'Marketplace', href: '/#marketplace' },
-  { label: 'Customers', href: '/#customers' },
+  { label: 'Marketplace', href: '/marketplace' },
+  { label: 'For Drivers', href: '/driver-info' },
   { label: 'Pricing', href: '/pricing' },
 ];
 

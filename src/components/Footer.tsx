@@ -3,12 +3,18 @@ import { Link } from 'react-router-dom';
 const PRODUCT_LINKS = ['Border Status', 'Fleet Management', 'Freight Marketplace', 'Route Intelligence', 'Analytics', 'Alerts & Notifications'];
 const COMPANY_LINKS = ['About Us', 'Careers', 'Press', 'Partners', 'Blog', 'Contact'];
 const LEGAL_LINKS = ['Privacy Policy', 'Terms of Service', 'Cookie Policy', 'POPIA Compliance'];
+const DRIVER_LINKS = [
+  { label: 'Driver Program', href: '/driver-info' },
+  { label: 'Advertise', href: '/advertise' },
+  { label: 'Partnership Inquiries', href: '#' },
+  { label: 'Data & API', href: '#' },
+];
 
 export default function Footer() {
   return (
     <footer style={{ backgroundColor: '#0A1628' }} className="text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand */}
           <div className="lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
@@ -47,6 +53,18 @@ export default function Footer() {
               {COMPANY_LINKS.map((link) => (
                 <li key={link}>
                   <Link to={link === 'About Us' ? '/about' : '#'} className="text-sm text-gray-400 hover:text-white transition-colors">{link}</Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Drivers & Partners */}
+          <div>
+            <h4 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">Drivers & Partners</h4>
+            <ul className="space-y-2.5">
+              {DRIVER_LINKS.map((link) => (
+                <li key={link.label}>
+                  <Link to={link.href} className="text-sm text-gray-400 hover:text-white transition-colors">{link.label}</Link>
                 </li>
               ))}
             </ul>
