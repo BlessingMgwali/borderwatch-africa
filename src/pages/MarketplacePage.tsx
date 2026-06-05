@@ -1,27 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Filter, ChevronDown, ArrowRight, X, CheckCircle, AlertTriangle, Star, Clock } from 'lucide-react';
-import { INDUSTRY_MAP, CARGO_TYPES, BUDGET_RANGES, SA_PROVINCES, AFRICAN_COUNTRIES, DRIVER_ROUTES, BORDERS } from '../config/data';
+import { ArrowRight, X, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
+import { INDUSTRY_MAP, CARGO_TYPES, BUDGET_RANGES, AFRICAN_COUNTRIES } from '../config/data';
 import { formatZAR, commissionRate } from '../config/payments';
 import { useAuth } from '../context/AuthContext';
-
-// ─── Mock data ────────────────────────────────────────────────────────────────
-
-const LOCAL_LOADS = [
-  { id: 'SHP-001', industry: 'Retail & FMCG', from: 'JHB (Gauteng)', to: 'Cape Town (Western Cape)', cargo: 'General Cargo', weight: 15, date: 'Tomorrow 08:00', budgetMin: 8000, budgetMax: 12000, shipper: 'Retail Distribution Co', postedAgo: '2h ago', urgent: false, special: [] },
-  { id: 'SHP-002', industry: 'Cold Chain & Perishables', from: 'JHB (Gauteng)', to: 'Durban (KwaZulu-Natal)', cargo: 'Refrigerated Goods', weight: 8, date: 'Today 16:00', budgetMin: 4500, budgetMax: 6000, shipper: 'Fresh Produce SA', postedAgo: '30min ago', urgent: true, special: ['Reefer truck required'] },
-  { id: 'SHP-003', industry: 'Construction & Infrastructure', from: 'Polokwane (Limpopo)', to: 'JHB (Gauteng)', cargo: 'Construction Materials', weight: 22, date: 'Friday', budgetMin: 5000, budgetMax: 8000, shipper: 'BuildSA Contractors', postedAgo: '4h ago', urgent: false, special: [] },
-  { id: 'SHP-004', industry: 'Agriculture & Farming', from: 'Tzaneen (Limpopo)', to: 'Durban (KwaZulu-Natal)', cargo: 'Agricultural Produce', weight: 18, date: 'Thursday 07:00', budgetMin: 6000, budgetMax: 9000, shipper: 'Limpopo Farms', postedAgo: '1h ago', urgent: false, special: ['Reefer truck required'] },
-  { id: 'SHP-005', industry: 'Manufacturing', from: 'East London (Eastern Cape)', to: 'JHB (Gauteng)', cargo: 'Automotive Parts', weight: 12, date: 'Next Monday', budgetMin: 7000, budgetMax: 11000, shipper: 'EL Motors', postedAgo: '6h ago', urgent: false, special: [] },
-];
-
-const CROSS_BORDER_LOADS = [
-  { id: 'SHP-101', industry: 'Mining & Resources', from: 'JHB, South Africa', to: 'Lusaka, Zambia', cargo: 'Mining Equipment', weight: 32, date: 'Tomorrow 08:00', budgetMin: 15000, budgetMax: 30000, shipper: 'Copperbelt Mining', postedAgo: '1h ago', urgent: false, special: ['Hazmat certified driver'], border: 'Beitbridge', borderStatus: 'SEVERE', borderWait: '8h 20min', altBorder: 'Kazungula', altStatus: 'MODERATE', altWait: '3h 10min' },
-  { id: 'SHP-102', industry: 'Agriculture & Farming', from: 'Cape Town, South Africa', to: 'Harare, Zimbabwe', cargo: 'Agricultural Produce', weight: 15, date: 'Friday 06:00', budgetMin: 12000, budgetMax: 18000, shipper: 'AgriSA Exports', postedAgo: '3h ago', urgent: false, special: ['Reefer truck required'], border: 'Beitbridge', borderStatus: 'SEVERE', borderWait: '8h 20min', altBorder: null, altStatus: null, altWait: null },
-  { id: 'SHP-103', industry: 'Pharmaceutical & Medical', from: 'Durban, South Africa', to: 'Maputo, Mozambique', cargo: 'Pharmaceuticals', weight: 5, date: 'Monday 10:00', budgetMin: 8000, budgetMax: 14000, shipper: 'Aspen Pharma', postedAgo: '45min ago', urgent: true, special: ['GPS tracking required', 'Insurance required'], border: 'Lebombo', borderStatus: 'FLOWING', borderWait: '45 min', altBorder: null, altStatus: null, altWait: null },
-  { id: 'SHP-104', industry: 'Government & NGO', from: 'JHB, South Africa', to: 'Gaborone, Botswana', cargo: 'General Cargo', weight: 10, date: 'Wednesday', budgetMin: 5000, budgetMax: 9000, shipper: 'USAID Botswana', postedAgo: '2h ago', urgent: false, special: [], border: 'Kopfontein', borderStatus: 'MODERATE', borderWait: '2h 10min', altBorder: null, altStatus: null, altWait: null },
-];
+import { supabase, Shipment } from '../lib/supabase';
 
 // ─── Helper components ────────────────────────────────────────────────────────
 
@@ -42,15 +26,13 @@ function StatusDot({ status }: { status: string }) {
 
 // ─── Load card ────────────────────────────────────────────────────────────────
 
-interface LoadCardProps { load: typeof LOCAL_LOADS[0] | typeof CROSS_BORDER_LOADS[0]; onQuote: (load: typeof LOCAL_LOADS[0]) => void; }
-
-function LoadCard({ load, onQuote }: LoadCardProps) {
-  const isCross = 'border' in load && load.border;
-  const cbl = load as typeof CROSS_BORDER_LOADS[0];
+function LoadCard({ load, onQuote }: { load: Shipment; onQuote: (load: Shipment) => void }) {
+  const isCross = load.shipment_type === 'cross_border';
+  const isUrgent = load.special_requirements?.includes('Urgent');
 
   return (
-    <motion.div whileHover={{ y: -2 }} className={`bg-white rounded-xl border shadow-sm overflow-hidden ${load.urgent ? 'border-[#E24B4A]' : 'border-gray-100'}`}>
-      {load.urgent && (
+    <motion.div whileHover={{ y: -2 }} className={`bg-white rounded-xl border shadow-sm overflow-hidden ${isUrgent ? 'border-[#E24B4A]' : 'border-gray-100'}`}>
+      {isUrgent && (
         <div className="bg-[#E24B4A] px-4 py-1.5 flex items-center gap-2">
           <AlertTriangle size={13} className="text-white" />
           <span className="text-white text-xs font-bold">URGENT</span>
@@ -58,59 +40,49 @@ function LoadCard({ load, onQuote }: LoadCardProps) {
       )}
       <div className="p-5">
         <div className="flex items-start justify-between mb-3">
-          <IndustryBadge industry={load.industry} />
-          {isCross ? <span className="text-xs bg-[#FFF4EE] text-[#E85D24] px-2 py-0.5 rounded-full font-bold">🌍 Cross-Border</span>
+          <IndustryBadge industry={load.industry ?? 'Other'} />
+          {isCross
+            ? <span className="text-xs bg-[#FFF4EE] text-[#E85D24] px-2 py-0.5 rounded-full font-bold">🌍 Cross-Border</span>
             : <span className="text-xs bg-[#EFF6FF] text-[#1E40AF] px-2 py-0.5 rounded-full font-bold">🇿🇦 Local</span>}
         </div>
 
         <div className="mb-3">
-          <div className="font-black text-[#0F2044] text-base">{load.from}</div>
+          <div className="font-black text-[#0F2044] text-base">{load.from_location}</div>
           <div className="flex items-center gap-1 text-[#6B7280] text-xs my-0.5">
             <ArrowRight size={12} />
           </div>
-          <div className="font-black text-[#0F2044] text-base">{load.to}</div>
+          <div className="font-black text-[#0F2044] text-base">{load.to_location}</div>
         </div>
 
         <div className="flex flex-wrap gap-2 mb-3 text-xs text-[#6B7280]">
-          <span className="bg-gray-100 px-2 py-1 rounded-lg">{load.cargo}</span>
-          <span className="bg-gray-100 px-2 py-1 rounded-lg">{load.weight}t</span>
-          <span className="bg-gray-100 px-2 py-1 rounded-lg flex items-center gap-1"><Clock size={11}/> {load.date}</span>
+          <span className="bg-gray-100 px-2 py-1 rounded-lg">{load.cargo_type}</span>
+          {load.weight_tons && <span className="bg-gray-100 px-2 py-1 rounded-lg">{load.weight_tons}t</span>}
+          {load.pickup_date && (
+            <span className="bg-gray-100 px-2 py-1 rounded-lg flex items-center gap-1">
+              <Clock size={11}/> {new Date(load.pickup_date).toLocaleDateString('en-ZA', { weekday: 'short', month: 'short', day: 'numeric' })}
+            </span>
+          )}
         </div>
 
-        {load.special.length > 0 && (
+        {load.special_requirements && load.special_requirements.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-3">
-            {load.special.map((s) => (
+            {load.special_requirements.map((s) => (
               <span key={s} className="text-xs bg-[#F2A623]/10 text-[#92400E] px-2 py-1 rounded-lg font-medium">⚠️ {s}</span>
             ))}
           </div>
         )}
 
-        {isCross && cbl.border && (
-          <div className="bg-[#F8F9FA] rounded-lg p-3 mb-3 text-xs">
-            <div className="flex items-center gap-2 mb-1">
-              <StatusDot status={cbl.borderStatus!} />
-              <span className="font-medium text-[#0F2044]">Via {cbl.border}</span>
-              <span className="text-[#6B7280]">— {cbl.borderStatus} · {cbl.borderWait}</span>
-            </div>
-            {cbl.altBorder && (
-              <div className="flex items-center gap-2">
-                <StatusDot status={cbl.altStatus!} />
-                <span className="font-medium text-[#1D9E75]">Via {cbl.altBorder}</span>
-                <span className="text-[#6B7280]">— {cbl.altStatus} · {cbl.altWait} (recommended)</span>
-              </div>
-            )}
-          </div>
-        )}
-
         <div className="flex items-center justify-between mb-4">
           <div>
-            <div className="font-black text-[#0F2044]">{formatZAR(load.budgetMin)} – {formatZAR(load.budgetMax)}</div>
-            <div className="text-xs text-[#6B7280]">Posted {load.postedAgo} · {load.shipper}</div>
+            <div className="font-black text-[#0F2044]">{load.budget_range ?? 'Budget TBD'}</div>
+            <div className="text-xs text-[#6B7280]">
+              Posted {new Date(load.created_at).toLocaleDateString('en-ZA', { month: 'short', day: 'numeric' })}
+            </div>
           </div>
         </div>
 
         <div className="flex gap-2">
-          <button onClick={() => onQuote(load as typeof LOCAL_LOADS[0])}
+          <button onClick={() => onQuote(load)}
             className="flex-1 bg-[#E85D24] text-white font-semibold py-2.5 rounded-lg hover:bg-[#d14f1a] transition-colors text-sm">
             Submit Quote
           </button>
@@ -125,12 +97,13 @@ function LoadCard({ load, onQuote }: LoadCardProps) {
 
 // ─── Quote modal ──────────────────────────────────────────────────────────────
 
-function QuoteModal({ load, onClose }: { load: typeof LOCAL_LOADS[0] | null; onClose: () => void }) {
+function QuoteModal({ load, onClose }: { load: Shipment | null; onClose: () => void }) {
   const { user } = useAuth();
   const [price, setPrice] = useState('');
   const [message, setMessage] = useState('');
   const [departure, setDeparture] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   if (!load) return null;
   const plan = user?.plan ?? 'starter';
@@ -138,6 +111,21 @@ function QuoteModal({ load, onClose }: { load: typeof LOCAL_LOADS[0] | null; onC
   const priceNum = parseInt(price.replace(/\D/g, ''), 10) || 0;
   const fee = Math.round(priceNum * rate);
   const receives = priceNum - fee;
+
+  async function handleSubmitQuote() {
+    if (!user || !load) return;
+    setSubmitting(true);
+    await supabase.from('quotes').insert({
+      shipment_id: load.id,
+      carrier_id: user.id,
+      price_zar: priceNum,
+      departure_date: departure || null,
+      message: message || null,
+      status: 'pending',
+    });
+    setSubmitting(false);
+    setSubmitted(true);
+  }
 
   if (submitted) {
     return (
@@ -163,8 +151,8 @@ function QuoteModal({ load, onClose }: { load: typeof LOCAL_LOADS[0] | null; onC
         </div>
         <div className="p-6 space-y-4">
           <div className="text-sm text-[#6B7280] bg-[#F8F9FA] rounded-lg p-3">
-            <span className="font-medium text-[#0F2044]">{load.from}</span> → <span className="font-medium text-[#0F2044]">{load.to}</span>
-            <span className="ml-2 text-[#6B7280]">· {load.cargo} · {load.weight}t</span>
+            <span className="font-medium text-[#0F2044]">{load.from_location}</span> → <span className="font-medium text-[#0F2044]">{load.to_location}</span>
+            <span className="ml-2 text-[#6B7280]">· {load.cargo_type}{load.weight_tons ? ` · ${load.weight_tons}t` : ''}</span>
           </div>
           <div>
             <label className="block text-sm font-medium text-[#0F2044] mb-1.5">Your price (ZAR)</label>
@@ -188,9 +176,9 @@ function QuoteModal({ load, onClose }: { load: typeof LOCAL_LOADS[0] | null; onC
               <div className="flex justify-between border-t border-gray-200 pt-1 mt-1"><span className="font-bold text-[#0F2044]">You receive</span><span className="font-black text-[#1D9E75]">{formatZAR(receives)}</span></div>
             </div>
           )}
-          <button onClick={() => setSubmitted(true)} disabled={!price || !departure}
-            className="w-full bg-[#E85D24] text-white font-semibold py-3 rounded-xl hover:bg-[#d14f1a] transition-colors disabled:opacity-40">
-            Submit Quote
+          <button onClick={handleSubmitQuote} disabled={!price || !departure || submitting}
+            className="w-full bg-[#E85D24] text-white font-semibold py-3 rounded-xl hover:bg-[#d14f1a] transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
+            {submitting ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Submitting...</> : 'Submit Quote'}
           </button>
         </div>
       </motion.div>
@@ -201,9 +189,12 @@ function QuoteModal({ load, onClose }: { load: typeof LOCAL_LOADS[0] | null; onC
 // ─── Post shipment wizard ─────────────────────────────────────────────────────
 
 function PostShipmentModal({ onClose }: { onClose: () => void }) {
+  const { user } = useAuth();
   const [type, setType] = useState<'local' | 'cross_border' | null>(null);
   const [step, setStep] = useState(1);
   const [done, setDone] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [postedRef, setPostedRef] = useState('');
 
   const [cargo, setCargo] = useState('');
   const [weight, setWeight] = useState('');
@@ -218,7 +209,33 @@ function PostShipmentModal({ onClose }: { onClose: () => void }) {
 
   const specialOptions = ['Reefer/refrigerated truck', 'Hazmat certified driver', 'Abnormal load permit', 'Armed escort required', 'GPS tracking required', 'Insurance required'];
   const toggleSpecial = (s: string) => setSpecial((p) => p.includes(s) ? p.filter((x) => x !== s) : [...p, s]);
-  const ref = `BW-SHP-${String(Math.floor(Math.random() * 9000) + 1000)}`;
+
+  async function handlePost() {
+    if (!user) return;
+    setSubmitting(true);
+    const ref = `BW-${Date.now().toString(36).toUpperCase()}`;
+    const { error } = await supabase.from('shipments').insert({
+      reference: ref,
+      shipper_id: user.id,
+      shipment_type: type!,
+      cargo_type: cargo,
+      weight_tons: weight ? parseFloat(weight) : null,
+      special_requirements: special,
+      from_location: type === 'local' ? from : `${from}, ${fromCountry}`,
+      to_location: type === 'local' ? to : `${to}, ${toCountry}`,
+      from_country: type === 'cross_border' ? fromCountry : 'South Africa',
+      to_country: type === 'cross_border' ? toCountry : 'South Africa',
+      pickup_date: pickupDate || null,
+      budget_range: budget || null,
+      notes: notes || null,
+      status: 'open',
+    });
+    setSubmitting(false);
+    if (!error) {
+      setPostedRef(ref);
+      setDone(true);
+    }
+  }
 
   if (done) {
     return (
@@ -226,8 +243,8 @@ function PostShipmentModal({ onClose }: { onClose: () => void }) {
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
           className="bg-white rounded-2xl p-8 max-w-md w-full text-center">
           <CheckCircle size={48} className="text-[#1D9E75] mx-auto mb-4" />
-          <h3 className="text-xl font-black text-[#0F2044] mb-2">Shipment Posted! ✅</h3>
-          <p className="text-[#6B7280] mb-2">Reference: <span className="font-black text-[#0F2044]">{ref}</span></p>
+          <h3 className="text-xl font-black text-[#0F2044] mb-2">Shipment Posted!</h3>
+          <p className="text-[#6B7280] mb-2">Reference: <span className="font-black text-[#0F2044]">{postedRef}</span></p>
           <p className="text-sm text-[#6B7280] mb-6">Transporters are being notified now. You should receive quotes within 2-4 hours.</p>
           <button onClick={onClose} className="w-full bg-[#E85D24] text-white font-semibold py-3 rounded-xl">View My Shipments</button>
         </motion.div>
@@ -404,9 +421,9 @@ function PostShipmentModal({ onClose }: { onClose: () => void }) {
                   <div><span className="text-[#6B7280]">Budget:</span> <span className="font-medium text-[#0F2044]">{budget}</span></div>
                 </div>
                 <p className="text-xs text-[#6B7280] mb-4">Platform commission: BorderWatch charges 10% on confirmed shipment value.</p>
-                <button onClick={() => setDone(true)}
-                  className="w-full bg-[#E85D24] text-white font-black py-3.5 rounded-xl hover:bg-[#d14f1a] transition-colors">
-                  Post Shipment
+                <button onClick={handlePost} disabled={submitting}
+                  className="w-full bg-[#E85D24] text-white font-black py-3.5 rounded-xl hover:bg-[#d14f1a] transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
+                  {submitting ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Posting...</> : 'Post Shipment'}
                 </button>
               </motion.div>
             )}
@@ -421,11 +438,27 @@ function PostShipmentModal({ onClose }: { onClose: () => void }) {
 
 export default function MarketplacePage() {
   const [activeTab, setActiveTab] = useState<'local' | 'cross_border'>('local');
-  const [quotingLoad, setQuotingLoad] = useState<typeof LOCAL_LOADS[0] | null>(null);
+  const [quotingLoad, setQuotingLoad] = useState<Shipment | null>(null);
   const [showPost, setShowPost] = useState(false);
+  const [shipments, setShipments] = useState<Shipment[]>([]);
+  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  const loads = activeTab === 'local' ? LOCAL_LOADS : CROSS_BORDER_LOADS;
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      const { data } = await supabase
+        .from('shipments')
+        .select('*')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false });
+      setShipments(data ?? []);
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  const loads = shipments.filter((s) => s.shipment_type === activeTab);
 
   return (
     <div className="pt-16 min-h-screen bg-[#F8F9FA]">
@@ -460,17 +493,42 @@ export default function MarketplacePage() {
         <div className="flex flex-wrap gap-6 mb-6 text-sm">
           <span className="text-[#6B7280]"><span className="font-bold text-[#0F2044]">{loads.length}</span> loads available</span>
           {user && <span className="text-[#6B7280]">Your commission rate: <span className="font-bold text-[#1D9E75]">{Math.round(commissionRate(user.plan ?? 'starter') * 100)}%</span></span>}
-          <Link to="/register" className="text-[#E85D24] font-semibold hover:underline text-sm">
-            {!user && 'Register to submit quotes →'}
-          </Link>
+          {!user && (
+            <Link to="/register" className="text-[#E85D24] font-semibold hover:underline text-sm">
+              Register to submit quotes →
+            </Link>
+          )}
         </div>
 
         {/* Load grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {loads.map((load) => (
-            <LoadCard key={load.id} load={load} onQuote={(l) => user ? setQuotingLoad(l) : null} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-1/3 mb-4" />
+                <div className="h-6 bg-gray-200 rounded w-2/3 mb-2" />
+                <div className="h-6 bg-gray-200 rounded w-1/2 mb-4" />
+                <div className="h-4 bg-gray-200 rounded w-full mb-2" />
+                <div className="h-10 bg-gray-200 rounded w-full mt-4" />
+              </div>
+            ))}
+          </div>
+        ) : loads.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <div className="text-4xl mb-3">{activeTab === 'local' ? '🇿🇦' : '🌍'}</div>
+            <h3 className="font-black text-[#0F2044] text-lg mb-2">No open shipments yet</h3>
+            <p className="text-[#6B7280] text-sm mb-4">Be the first to post a {activeTab === 'local' ? 'local' : 'cross-border'} shipment.</p>
+            <button onClick={() => setShowPost(true)} className="bg-[#E85D24] text-white font-semibold px-6 py-3 rounded-xl hover:bg-[#d14f1a] transition-colors text-sm">
+              Post a Shipment
+            </button>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {loads.map((load) => (
+              <LoadCard key={load.id} load={load} onQuote={(l) => user ? setQuotingLoad(l) : null} />
+            ))}
+          </div>
+        )}
 
         {!user && (
           <div className="mt-8 bg-[#0F2044] rounded-2xl p-8 text-center">

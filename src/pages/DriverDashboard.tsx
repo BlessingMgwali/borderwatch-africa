@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Home, ClipboardList, Truck, User, Star, CheckCircle, Camera, Trophy, ChevronRight, AlertCircle, DollarSign, MapPin, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { supabase, BorderReport } from '../lib/supabase';
 import { BORDERS, DELAY_CAUSES, DRIVER_ROUTES, POINTS_CONFIG, REWARDS } from '../config/data';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -158,30 +159,52 @@ function HomeTab({ onReport, onViewLoads }: { onReport: () => void; onViewLoads:
 // ─── Report tab ───────────────────────────────────────────────────────────────
 
 function ReportTab() {
+  const { user } = useAuth();
   const [rStep, setRStep] = useState(1);
   const [border, setBorder] = useState('');
   const [waitBucket, setWaitBucket] = useState('');
   const [causes, setCauses] = useState<string[]>([]);
   const [hasPhoto, setHasPhoto] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [offline] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [offline] = useState(!navigator.onLine);
 
   const waitOptions = ['Under 1 hour', '1-3 hours', '3-6 hours', '6-12 hours', '12+ hours'];
 
+  const waitMinutesFromBucket = (bucket: string): number => {
+    if (bucket === 'Under 1 hour') return 45;
+    if (bucket === '1-3 hours') return 120;
+    if (bucket === '3-6 hours') return 270;
+    if (bucket === '6-12 hours') return 540;
+    return 780;
+  };
+
   const toggleCause = (c: string) => setCauses((p) => p.includes(c) ? p.filter((x) => x !== c) : [...p, c]);
 
-  const handleSubmit = () => {
-    if (offline) {
-      setSyncing(true);
-      setTimeout(() => { setSyncing(false); setSubmitted(true); }, 1200);
-    } else {
-      setSubmitted(true);
+  const handleSubmit = async () => {
+    if (!user) return;
+    setSubmitting(true);
+    setSubmitError('');
+    const { error } = await supabase.from('border_reports').insert({
+      border_name: border,
+      wait_minutes: waitMinutesFromBucket(waitBucket),
+      causes,
+      driver_id: user.id,
+      photo_url: hasPhoto ? 'uploaded' : null,
+      verified_count: 0,
+      status: 'unverified',
+    });
+    setSubmitting(false);
+    if (error) {
+      setSubmitError(error.message);
+      return;
     }
+    setSubmitted(true);
   };
 
   const reset = () => {
-    setRStep(1); setBorder(''); setWaitBucket(''); setCauses([]); setHasPhoto(false); setSubmitted(false);
+    setRStep(1); setBorder(''); setWaitBucket(''); setCauses([]); setHasPhoto(false); setSubmitted(false); setSubmitError('');
   };
 
   const points = POINTS_CONFIG.reportSubmitted + (hasPhoto ? POINTS_CONFIG.photoIncluded : 0);
@@ -264,17 +287,18 @@ function ReportTab() {
       </div>
 
       {/* Submit */}
+      {submitError && <div className="text-[#E24B4A] text-sm font-medium">{submitError}</div>}
       <button
         onClick={handleSubmit}
-        disabled={!border || !waitBucket}
+        disabled={!border || !waitBucket || submitting}
         className="w-full bg-[#E85D24] text-white font-black text-base py-4 rounded-2xl hover:bg-[#d14f1a] transition-colors disabled:opacity-40 shadow-lg">
-        {syncing ? (
+        {submitting ? (
           <span className="flex items-center justify-center gap-2">
             <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             Saving...
           </span>
         ) : (
-          `✅ Submit Report — earn +${points} points`
+          `Submit Report — earn +${points} points`
         )}
       </button>
     </div>
@@ -328,10 +352,25 @@ function LoadsTab() {
 // ─── Profile tab ──────────────────────────────────────────────────────────────
 
 function ProfileTab() {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [reportHistory, setReportHistory] = useState<BorderReport[]>([]);
+  const [driverProfile, setDriverProfile] = useState<{ truck_registration: string; report_count: number; id_verified: boolean; truck_verified: boolean; rating: number | null } | null>(null);
+
   const levelColors = { Bronze: '#CD7F32', Silver: '#A0AEC0', Green: '#1D9E75', Gold: '#F2A623' };
-  const level = (user?.level ?? 'Gold') as keyof typeof levelColors;
+  const level = (user?.level ?? 'Bronze') as keyof typeof levelColors;
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from('border_reports')
+      .select('*').eq('driver_id', user.id).order('created_at', { ascending: false }).limit(10)
+      .then(({ data }) => setReportHistory((data ?? []) as BorderReport[]));
+
+    supabase.from('driver_profiles')
+      .select('truck_registration, report_count, id_verified, truck_verified, rating')
+      .eq('id', user.id).maybeSingle()
+      .then(({ data }) => { if (data) setDriverProfile(data as typeof driverProfile); });
+  }, [user]);
 
   return (
     <div className="space-y-4">
@@ -342,19 +381,17 @@ function ProfileTab() {
             <span className="text-white font-black text-xl">{user?.name?.charAt(0) ?? 'P'}</span>
           </div>
           <div className="flex-1">
-            <div className="font-black text-lg">{user?.name ?? 'Peter Dube'}</div>
+            <div className="font-black text-lg">{user?.name ?? 'Driver'}</div>
             <div className="flex items-center gap-2 mt-1">
-              <CheckCircle size={13} className="text-[#1D9E75]" />
-              <span className="text-xs text-white/70">ID Verified</span>
-              <CheckCircle size={13} className="text-[#1D9E75]" />
-              <span className="text-xs text-white/70">Truck Verified</span>
+              {driverProfile?.id_verified && <><CheckCircle size={13} className="text-[#1D9E75]" /><span className="text-xs text-white/70">ID Verified</span></>}
+              {driverProfile?.truck_verified && <><CheckCircle size={13} className="text-[#1D9E75]" /><span className="text-xs text-white/70">Truck Verified</span></>}
             </div>
-            <div className="text-xs text-white/60 mt-1">{user?.truckReg ?? 'GP 123-456'}</div>
+            <div className="text-xs text-white/60 mt-1">{driverProfile?.truck_registration ?? ''}</div>
           </div>
         </div>
         <div className="grid grid-cols-3 gap-3 text-center">
           <div>
-            <div className="text-xl font-black" style={{ color: levelColors[level] }}>{user?.points?.toLocaleString() ?? '1,240'}</div>
+            <div className="text-xl font-black" style={{ color: levelColors[level] }}>{(user?.points ?? 0).toLocaleString()}</div>
             <div className="text-xs text-white/60">Points</div>
           </div>
           <div>
@@ -362,23 +399,25 @@ function ProfileTab() {
             <div className="text-xs text-white/60">Level</div>
           </div>
           <div>
-            <div className="text-xl font-black text-white">89</div>
+            <div className="text-xl font-black text-white">{driverProfile?.report_count ?? 0}</div>
             <div className="text-xs text-white/60">Reports</div>
           </div>
         </div>
       </div>
 
       {/* Rating */}
-      <div className="bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between">
-        <div>
-          <div className="font-bold text-[#0F2044]">Driver Rating</div>
-          <div className="text-xs text-[#6B7280] mt-0.5">From cargo owners</div>
+      {driverProfile?.rating && (
+        <div className="bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between">
+          <div>
+            <div className="font-bold text-[#0F2044]">Driver Rating</div>
+            <div className="text-xs text-[#6B7280] mt-0.5">From cargo owners</div>
+          </div>
+          <div className="flex items-center gap-1">
+            <Star size={18} className="fill-[#F2A623] text-[#F2A623]" />
+            <span className="font-black text-[#0F2044] text-lg">{driverProfile.rating}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <Star size={18} className="fill-[#F2A623] text-[#F2A623]" />
-          <span className="font-black text-[#0F2044] text-lg">4.8</span>
-        </div>
-      </div>
+      )}
 
       {/* Leaderboard */}
       <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
@@ -395,9 +434,9 @@ function ProfileTab() {
             <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
               <div className="px-4 pb-4 space-y-2">
                 {LEADERBOARD.map((driver) => (
-                  <div key={driver.rank} className={`flex items-center gap-3 p-2.5 rounded-lg ${driver.isMe ? 'bg-[#FFF4EE] border border-[#E85D24]/30' : ''}`}>
+                  <div key={driver.rank} className={`flex items-center gap-3 p-2.5 rounded-lg ${driver.name === user?.name ? 'bg-[#FFF4EE] border border-[#E85D24]/30' : ''}`}>
                     <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black ${driver.rank <= 3 ? 'bg-[#F2A623] text-white' : 'bg-gray-100 text-[#6B7280]'}`}>{driver.rank}</span>
-                    <span className="flex-1 text-sm font-medium text-[#0F2044]">{driver.name} {driver.isMe && '(You)'}</span>
+                    <span className="flex-1 text-sm font-medium text-[#0F2044]">{driver.name} {driver.name === user?.name && '(You)'}</span>
                     <span className="text-sm font-black text-[#F2A623]">{driver.points.toLocaleString()}</span>
                   </div>
                 ))}
@@ -407,18 +446,20 @@ function ProfileTab() {
         </AnimatePresence>
       </div>
 
-      {/* Report history */}
+      {/* Report history — real data */}
       <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
         <div className="p-4 border-b border-gray-100">
           <h2 className="font-bold text-[#0F2044]">Report History</h2>
         </div>
         <div className="divide-y divide-gray-50">
-          {REPORT_HISTORY.map((r, i) => (
-            <div key={i} className="flex items-center gap-3 px-4 py-3">
-              <span className="text-xs text-[#6B7280] w-12 flex-shrink-0">{r.date}</span>
-              <span className="text-sm font-medium text-[#0F2044] flex-1">{r.border}</span>
-              <span className="text-xs text-[#6B7280]">{r.status}</span>
-              {r.verified ? <CheckCircle size={14} className="text-[#1D9E75] flex-shrink-0" /> : <span className="text-xs text-[#6B7280]">—</span>}
+          {reportHistory.length === 0 ? (
+            <div className="px-4 py-6 text-center text-sm text-[#6B7280]">No reports yet. Submit your first border report.</div>
+          ) : reportHistory.map((r) => (
+            <div key={r.id} className="flex items-center gap-3 px-4 py-3">
+              <span className="text-xs text-[#6B7280] w-20 flex-shrink-0">{new Date(r.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })}</span>
+              <span className="text-sm font-medium text-[#0F2044] flex-1 truncate">{r.border_name}</span>
+              <span className="text-xs text-[#6B7280]">{r.wait_minutes < 60 ? `${r.wait_minutes}m` : `${Math.round(r.wait_minutes / 60)}h`}</span>
+              {r.status !== 'unverified' ? <CheckCircle size={14} className="text-[#1D9E75] flex-shrink-0" /> : <span className="text-xs text-[#6B7280]">—</span>}
             </div>
           ))}
         </div>
@@ -437,7 +478,7 @@ function ProfileTab() {
             <ChevronRight size={14} className="text-[#6B7280]" />
           </button>
         ))}
-        <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 text-[#E24B4A]">
+        <button onClick={signOut} className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 text-[#E24B4A]">
           <DollarSign size={16} />
           <span className="text-sm font-medium">Sign out</span>
         </button>

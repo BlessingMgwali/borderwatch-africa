@@ -1,125 +1,113 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { Session } from '@supabase/supabase-js';
+import { supabase, Profile } from '../lib/supabase';
 
+// Keep role type exported for use across dashboards
 export type Role = 'superadmin' | 'transporter' | 'cargo_owner' | 'driver';
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: Role;
-  plan: 'starter' | 'professional' | 'business' | 'enterprise';
-  companyId?: string;
-  companyName?: string;
-  industry?: string;
-  points?: number;
-  level?: string;
+// Unified user type that works like the old User type but maps to Profile
+export type User = Profile & {
+  name: string;       // alias for full_name
+  companyName: string | null;
   truckReg?: string;
-}
+};
 
-interface AuthContextType {
+type AuthContextType = {
   user: User | null;
+  session: Session | null;
+  loading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
+  // Legacy compat kept so existing pages compile without changes
   login: (email: string, password: string) => boolean;
   logout: () => void;
   impersonating: string | null;
   impersonatedName: string;
   startImpersonation: (id: string, name: string) => void;
   stopImpersonation: () => void;
-}
-
-const MOCK_USERS: Record<string, User> = {
-  'admin@borderwatch.africa': {
-    id: 'su-001',
-    email: 'admin@borderwatch.africa',
-    name: 'Admin User',
-    role: 'superadmin',
-    plan: 'enterprise',
-  },
-  'company@test.com': {
-    id: 'tr-001',
-    email: 'company@test.com',
-    name: 'Themba Ndlovu',
-    role: 'transporter',
-    plan: 'business',
-    companyId: 'comp-001',
-    companyName: 'Ndlovu Transport Group',
-  },
-  'shipper@test.com': {
-    id: 'co-001',
-    email: 'shipper@test.com',
-    name: 'Sipho Dlamini',
-    role: 'cargo_owner',
-    plan: 'starter',
-    companyId: 'shp-001',
-    companyName: 'Copperbelt Mining Supplies',
-    industry: 'Mining & Resources',
-  },
-  'driver@test.com': {
-    id: 'dr-001',
-    email: 'driver@test.com',
-    name: 'Peter Dube',
-    role: 'driver',
-    plan: 'starter',
-    points: 1240,
-    level: 'Gold',
-    truckReg: 'GP 123-456',
-  },
-  'owner@borderwatch.africa': {
-    id: 'su-002',
-    email: 'owner@borderwatch.africa',
-    name: 'Platform Owner',
-    role: 'superadmin',
-    plan: 'enterprise',
-  },
-};
-
-const MOCK_PASSWORDS: Record<string, string> = {
-  'admin@borderwatch.africa': 'admin123',
-  'company@test.com': 'company123',
-  'shipper@test.com': 'shipper123',
-  'driver@test.com': 'driver123',
-  'owner@borderwatch.africa': 'owner123',
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+function profileToUser(p: Profile): User {
+  return { ...p, name: p.full_name, companyName: p.company_name };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    try {
-      const stored = sessionStorage.getItem('bw_user');
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [impersonating, setImpersonating] = useState<string | null>(null);
   const [impersonatedName, setImpersonatedName] = useState('');
 
-  const login = useCallback((email: string, password: string): boolean => {
-    const u = MOCK_USERS[email.toLowerCase()];
-    if (!u || MOCK_PASSWORDS[email.toLowerCase()] !== password) return false;
-    setUser(u);
-    sessionStorage.setItem('bw_user', JSON.stringify(u));
-    return true;
+  async function loadProfile(userId: string) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+    if (data) setUser(profileToUser(data as Profile));
+  }
+
+  async function refreshProfile() {
+    if (session?.user?.id) await loadProfile(session.user.id);
+  }
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      setSession(s);
+      if (s?.user) {
+        (async () => {
+          await loadProfile(s.user.id);
+          setLoading(false);
+        })();
+      } else {
+        setLoading(false);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, s) => {
+      setSession(s);
+      if (s?.user) {
+        (async () => { await loadProfile(s.user.id); })();
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const logout = useCallback(() => {
+  async function signIn(email: string, password: string): Promise<{ error: string | null }> {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error: error.message };
+    return { error: null };
+  }
+
+  async function signOut() {
+    await supabase.auth.signOut();
     setUser(null);
-    setImpersonating(null);
-    sessionStorage.removeItem('bw_user');
-  }, []);
+    setSession(null);
+  }
 
-  const startImpersonation = useCallback((id: string, name: string) => {
-    setImpersonating(id);
-    setImpersonatedName(name);
-  }, []);
+  // Legacy sync login shim — used by LoginPage until fully migrated
+  function login(_email: string, _password: string): boolean {
+    // Async sign-in is handled via signIn; this is a no-op shim
+    return false;
+  }
 
-  const stopImpersonation = useCallback(() => {
-    setImpersonating(null);
-    setImpersonatedName('');
-  }, []);
+  function logout() { signOut(); }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, impersonating, impersonatedName, startImpersonation, stopImpersonation }}>
+    <AuthContext.Provider value={{
+      user, session, loading,
+      signIn, signOut, refreshProfile,
+      login, logout,
+      impersonating, impersonatedName,
+      startImpersonation: (id, name) => { setImpersonating(id); setImpersonatedName(name); },
+      stopImpersonation: () => { setImpersonating(null); setImpersonatedName(''); },
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,8 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+
+const ROLE_ROUTES: Record<string, string> = {
+  superadmin: '/admin',
+  transporter: '/dashboard',
+  cargo_owner: '/shipper',
+  driver: '/driver',
+};
+
+const DEMO_ACCOUNTS = [
+  { email: 'admin@borderwatch.africa', password: 'admin123', role: 'Super Admin', color: '#0F2044' },
+  { email: 'company@test.com', password: 'company123', role: 'Transporter', color: '#E85D24' },
+  { email: 'shipper@test.com', password: 'shipper123', role: 'Cargo Owner', color: '#1D9E75' },
+  { email: 'driver@test.com', password: 'driver123', role: 'Driver', color: '#F2A623' },
+];
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -10,57 +24,34 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { signIn, user } = useAuth();
   const navigate = useNavigate();
 
   const inputCls = 'w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm text-[#0F2044] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#E85D24]/30 focus:border-[#E85D24] transition-colors';
   const labelCls = 'block text-sm font-medium text-[#0F2044] mb-1.5';
 
-  const DEMO_ACCOUNTS = [
-    { email: 'admin@borderwatch.africa', password: 'admin123', role: 'Super Admin', color: '#0F2044' },
-    { email: 'company@test.com', password: 'company123', role: 'Transporter', color: '#E85D24' },
-    { email: 'shipper@test.com', password: 'shipper123', role: 'Cargo Owner', color: '#1D9E75' },
-    { email: 'driver@test.com', password: 'driver123', role: 'Driver', color: '#F2A623' },
-  ];
+  useEffect(() => {
+    if (user) {
+      navigate(ROLE_ROUTES[user.role] ?? '/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setLoading(true);
-    setTimeout(() => {
-      const ok = login(email, password);
-      setLoading(false);
-      if (!ok) {
-        setError('Invalid email or password.');
-        return;
-      }
-      // Route based on role
-      const roleRoutes: Record<string, string> = {
-        superadmin: '/admin',
-        transporter: '/dashboard',
-        cargo_owner: '/shipper',
-        driver: '/driver',
-      };
-      // We need to get user from session
-      const stored = sessionStorage.getItem('bw_user');
-      if (stored) {
-        const u = JSON.parse(stored);
-        navigate(roleRoutes[u.role] ?? '/dashboard');
-      }
-    }, 800);
-  };
+    const { error: err } = await signIn(email.trim(), password);
+    setLoading(false);
+    if (err) setError('Invalid email or password.');
+  }
 
-  const quickLogin = (acc: typeof DEMO_ACCOUNTS[0]) => {
-    const ok = login(acc.email, acc.password);
-    if (ok) {
-      const stored = sessionStorage.getItem('bw_user');
-      if (stored) {
-        const u = JSON.parse(stored);
-        const roleRoutes: Record<string, string> = { superadmin: '/admin', transporter: '/dashboard', cargo_owner: '/shipper', driver: '/driver' };
-        navigate(roleRoutes[u.role] ?? '/dashboard');
-      }
-    }
-  };
+  async function quickLogin(acc: typeof DEMO_ACCOUNTS[0]) {
+    setError('');
+    setLoading(true);
+    const { error: err } = await signIn(acc.email, acc.password);
+    setLoading(false);
+    if (err) setError(err);
+  }
 
   return (
     <div className="pt-16 min-h-screen bg-[#F8F9FA] flex items-center justify-center px-4">
@@ -89,10 +80,7 @@ export default function LoginPage() {
               <input type="email" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} required />
             </div>
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-medium text-[#0F2044]">Password</label>
-                <a href="#" className="text-xs text-[#E85D24] hover:underline">Forgot password?</a>
-              </div>
+              <label className="block text-sm font-medium text-[#0F2044] mb-1.5">Password</label>
               <div className="relative">
                 <input type={showPassword ? 'text' : 'password'} placeholder="Your password" value={password} onChange={(e) => setPassword(e.target.value)} className={inputCls + ' pr-10'} required />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -110,8 +98,8 @@ export default function LoginPage() {
             <p className="text-xs font-bold text-[#6B7280] uppercase tracking-wider mb-3">Demo accounts — click to sign in</p>
             <div className="grid grid-cols-2 gap-2">
               {DEMO_ACCOUNTS.map((acc) => (
-                <button key={acc.email} onClick={() => quickLogin(acc)}
-                  className="text-left p-3 rounded-xl border-2 hover:shadow-sm transition-all"
+                <button key={acc.email} onClick={() => quickLogin(acc)} disabled={loading}
+                  className="text-left p-3 rounded-xl border-2 hover:shadow-sm transition-all disabled:opacity-50"
                   style={{ borderColor: `${acc.color}30`, backgroundColor: `${acc.color}08` }}>
                   <div className="text-xs font-bold mb-0.5" style={{ color: acc.color }}>{acc.role}</div>
                   <div className="text-xs text-[#6B7280] truncate">{acc.email}</div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -7,6 +7,7 @@ import {
   Send, DollarSign, Star, CheckCircle, FileText,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { supabase, Shipment, Quote } from '../lib/supabase';
 import { INDUSTRY_MAP, CARGO_TYPES, BUDGET_RANGES } from '../config/data';
 import { formatZAR, commissionRate, platformFee, carrierReceives } from '../config/payments';
 
@@ -71,7 +72,7 @@ const NAV_ITEMS: NavItem[] = [
 
 function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
 
   return (
     <>
@@ -229,22 +230,48 @@ function DashboardHome() {
 
 function ShipmentRequestsPage() {
   const { user } = useAuth();
-  const [quoting, setQuoting] = useState<typeof SHIPMENT_REQUESTS[0] | null>(null);
+  const [shipments, setShipments] = useState<Shipment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [quoting, setQuoting] = useState<Shipment | null>(null);
   const [price, setPrice] = useState('');
   const [departure, setDeparture] = useState('');
+  const [eta, setEta] = useState('');
   const [message, setMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [filter, setFilter] = useState('All');
 
-  const industries = ['All', ...new Set(SHIPMENT_REQUESTS.map((s) => INDUSTRY_MAP[s.industry]?.label ?? 'Other'))];
-  const filtered = filter === 'All' ? SHIPMENT_REQUESTS : SHIPMENT_REQUESTS.filter((s) => (INDUSTRY_MAP[s.industry]?.label ?? 'Other') === filter);
+  useEffect(() => {
+    supabase.from('shipments').select('*').eq('status', 'open')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => { setShipments((data ?? []) as Shipment[]); setLoading(false); });
+  }, []);
+
+  const industries = ['All', ...new Set(shipments.map((s) => s.industry ?? 'Other').filter(Boolean))];
+  const filtered = filter === 'All' ? shipments : shipments.filter((s) => (s.industry ?? 'Other') === filter);
 
   const priceNum = parseInt(price.replace(/\D/g, ''), 10) || 0;
   const plan = user?.plan ?? 'starter';
   const fee = platformFee(priceNum, plan);
   const receives = carrierReceives(priceNum, plan);
 
-  const handleClose = () => { setQuoting(null); setPrice(''); setDeparture(''); setMessage(''); setSubmitted(false); };
+  const handleClose = () => { setQuoting(null); setPrice(''); setDeparture(''); setEta(''); setMessage(''); setSubmitted(false); };
+
+  async function handleSubmitQuote() {
+    if (!user || !quoting) return;
+    setSubmitting(true);
+    const { error } = await supabase.from('quotes').insert({
+      shipment_id: quoting.id,
+      carrier_id: user.id,
+      price_zar: priceNum,
+      departure_date: departure || null,
+      eta_date: eta || null,
+      message: message || null,
+      status: 'pending',
+    });
+    setSubmitting(false);
+    if (!error) setSubmitted(true);
+  }
 
   return (
     <div>
@@ -260,38 +287,38 @@ function ShipmentRequestsPage() {
         ))}
       </div>
 
-      <div className="grid md:grid-cols-2 gap-4">
-        {filtered.map((s) => (
-          <div key={s.ref} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex flex-wrap gap-2">
-                <IndustryBadge industry={s.industry} />
-                <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${s.type === 'local' ? 'bg-[#EFF6FF] text-[#1E40AF]' : 'bg-[#FFF4EE] text-[#E85D24]'}`}>
-                  {s.type === 'local' ? '🇿🇦 Local' : '🌍 Cross-Border'}
-                </span>
+      {loading ? (
+        <div className="flex items-center justify-center py-12 text-[#6B7280]">Loading shipments...</div>
+      ) : filtered.length === 0 ? (
+        <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
+          <Package size={48} className="text-gray-300 mx-auto mb-4" />
+          <h2 className="font-bold text-[#0F2044] mb-2">No open shipments</h2>
+          <p className="text-sm text-[#6B7280]">Check back soon — cargo owners are posting loads daily.</p>
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 gap-4">
+          {filtered.map((s) => (
+            <div key={s.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex flex-wrap gap-2">
+                  {s.industry && <IndustryBadge industry={s.industry} />}
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${s.shipment_type === 'local' ? 'bg-[#EFF6FF] text-[#1E40AF]' : 'bg-[#FFF4EE] text-[#E85D24]'}`}>
+                    {s.shipment_type === 'local' ? 'Local' : 'Cross-Border'}
+                  </span>
+                </div>
+                <span className="text-xs text-[#6B7280] font-mono">{s.reference}</span>
               </div>
-              <span className="text-xs text-[#6B7280] font-mono">{s.ref}</span>
-            </div>
-            <div className="font-black text-[#0F2044] text-base mb-1">{s.from} → {s.to}</div>
-            <div className="text-sm text-[#6B7280] mb-2">{s.cargo} · {s.weight}t · {s.date}</div>
-            <div className="text-sm font-bold text-[#0F2044] mb-2">{formatZAR(s.budgetMin)} – {formatZAR(s.budgetMax)}</div>
-            {s.special.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {s.special.map((sp) => (
-                  <span key={sp} className="text-xs bg-[#F2A623]/10 text-[#92400E] px-2 py-1 rounded-lg font-medium">⚠️ {sp}</span>
-                ))}
-              </div>
-            )}
-            <div className="flex gap-2">
-              <button onClick={() => setQuoting(s)}
-                className="flex-1 bg-[#E85D24] text-white font-semibold py-2.5 rounded-lg hover:bg-[#d14f1a] transition-colors text-sm">
+              <div className="font-black text-[#0F2044] text-base mb-1">{s.from_location} → {s.to_location}</div>
+              <div className="text-sm text-[#6B7280] mb-2">{s.cargo_type}{s.weight_tons ? ` · ${s.weight_tons}t` : ''}{s.pickup_date ? ` · ${s.pickup_date}` : ''}</div>
+              {s.budget_range && <div className="text-sm font-bold text-[#0F2044] mb-3">{s.budget_range}</div>}
+              <button onClick={() => { setQuoting(s); setSubmitted(false); }}
+                className="w-full bg-[#E85D24] text-white font-semibold py-2.5 rounded-lg hover:bg-[#d14f1a] transition-colors text-sm">
                 Submit Quote
               </button>
-              <button className="px-3 border border-gray-200 rounded-lg text-sm text-[#6B7280] hover:bg-gray-50">Save</button>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Quote modal */}
       <AnimatePresence>
@@ -309,22 +336,27 @@ function ShipmentRequestsPage() {
               ) : (
                 <>
                   <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                    <h3 className="font-black text-[#0F2044]">Submit Quote — {quoting.ref}</h3>
+                    <h3 className="font-black text-[#0F2044]">Submit Quote — {quoting.reference}</h3>
                     <button onClick={handleClose}><X size={20} className="text-[#6B7280]" /></button>
                   </div>
                   <div className="p-6 space-y-4">
                     <div className="text-sm bg-[#F8F9FA] rounded-lg p-3 text-[#6B7280]">
-                      {quoting.from} → {quoting.to} · {quoting.cargo} · {quoting.weight}t
+                      {quoting.from_location} → {quoting.to_location} · {quoting.cargo_type}{quoting.weight_tons ? ` · ${quoting.weight_tons}t` : ''}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-[#0F2044] mb-1.5">Your price (ZAR)</label>
                       <input className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E85D24]/30"
-                        placeholder="R 18,000" value={price} onChange={(e) => setPrice(e.target.value)} />
+                        placeholder="e.g. 18000" value={price} onChange={(e) => setPrice(e.target.value)} />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-[#0F2044] mb-1.5">Departure date</label>
                       <input type="date" className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none"
                         value={departure} onChange={(e) => setDeparture(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#0F2044] mb-1.5">Estimated arrival</label>
+                      <input type="date" className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none"
+                        value={eta} onChange={(e) => setEta(e.target.value)} />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-[#0F2044] mb-1.5">Message</label>
@@ -338,9 +370,9 @@ function ShipmentRequestsPage() {
                         <div className="flex justify-between border-t border-gray-200 pt-1"><span className="font-bold text-[#0F2044]">You receive</span><span className="font-black text-[#1D9E75]">{formatZAR(receives)}</span></div>
                       </div>
                     )}
-                    <button onClick={() => setSubmitted(true)} disabled={!price || !departure}
-                      className="w-full bg-[#E85D24] text-white font-semibold py-3 rounded-xl disabled:opacity-40">
-                      Submit Quote
+                    <button onClick={handleSubmitQuote} disabled={!price || !departure || submitting}
+                      className="w-full bg-[#E85D24] text-white font-semibold py-3 rounded-xl disabled:opacity-40 flex items-center justify-center gap-2">
+                      {submitting ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Submitting...</> : 'Submit Quote'}
                     </button>
                   </div>
                 </>
@@ -354,44 +386,75 @@ function ShipmentRequestsPage() {
 }
 
 function MyQuotesPage() {
+  const { user } = useAuth();
+  const [quotes, setQuotes] = useState<(Quote & { shipment_ref: string; route: string })[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: quotesData } = await supabase.from('quotes').select('*')
+        .eq('carrier_id', user.id).order('created_at', { ascending: false });
+      if (!quotesData) { setLoading(false); return; }
+      const shipmentIds = [...new Set((quotesData as Quote[]).map((q) => q.shipment_id))];
+      const { data: shipmentsData } = await supabase.from('shipments')
+        .select('id, reference, from_location, to_location').in('id', shipmentIds);
+      const smap = new Map((shipmentsData ?? []).map((s: { id: string; reference: string; from_location: string; to_location: string }) => [s.id, s]));
+      setQuotes((quotesData as Quote[]).map((q) => {
+        const s = smap.get(q.shipment_id) as { reference: string; from_location: string; to_location: string } | undefined;
+        return { ...q, shipment_ref: s?.reference ?? '—', route: s ? `${s.from_location} → ${s.to_location}` : '—' };
+      }));
+      setLoading(false);
+    })();
+  }, [user]);
+
   const statusMap = {
-    accepted: { label: 'Accepted ✅', color: '#1D9E75', bg: '#F0FDF4' },
+    accepted: { label: 'Accepted', color: '#1D9E75', bg: '#F0FDF4' },
     pending: { label: 'Pending', color: '#F2A623', bg: '#FFFBEB' },
-    declined: { label: 'Declined ❌', color: '#E24B4A', bg: '#FEF2F2' },
+    declined: { label: 'Declined', color: '#E24B4A', bg: '#FEF2F2' },
   };
 
   return (
     <div>
       <h1 className="text-2xl font-black text-[#0F2044] mb-6">My Quotes</h1>
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-100">
-                {['Reference', 'Route', 'Amount', 'Date', 'Status'].map((h) => (
-                  <th key={h} className="px-5 py-3 text-left text-xs font-bold text-[#6B7280] uppercase tracking-wider">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {MY_QUOTES.map((q) => {
-                const st = statusMap[q.status as keyof typeof statusMap];
-                return (
-                  <tr key={q.ref} className="hover:bg-gray-50">
-                    <td className="px-5 py-3.5 text-xs font-mono font-bold text-[#0F2044]">{q.ref}</td>
-                    <td className="px-5 py-3.5 text-sm text-[#0F2044]">{q.route}</td>
-                    <td className="px-5 py-3.5 text-sm font-bold text-[#0F2044]">{formatZAR(q.amount)}</td>
-                    <td className="px-5 py-3.5 text-sm text-[#6B7280]">{q.date}</td>
-                    <td className="px-5 py-3.5">
-                      <span className="text-xs font-bold px-2 py-1 rounded-full" style={{ color: st.color, backgroundColor: st.bg }}>{st.label}</span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      {loading ? (
+        <div className="flex items-center justify-center py-12 text-[#6B7280]">Loading...</div>
+      ) : quotes.length === 0 ? (
+        <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
+          <Send size={48} className="text-gray-300 mx-auto mb-4" />
+          <p className="text-sm text-[#6B7280]">No quotes submitted yet. Browse Shipment Requests to start bidding.</p>
         </div>
-      </div>
+      ) : (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  {['Reference', 'Route', 'Amount', 'Date', 'Status'].map((h) => (
+                    <th key={h} className="px-5 py-3 text-left text-xs font-bold text-[#6B7280] uppercase tracking-wider">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {quotes.map((q) => {
+                  const st = statusMap[q.status as keyof typeof statusMap];
+                  return (
+                    <tr key={q.id} className="hover:bg-gray-50">
+                      <td className="px-5 py-3.5 text-xs font-mono font-bold text-[#0F2044]">{q.shipment_ref}</td>
+                      <td className="px-5 py-3.5 text-sm text-[#0F2044]">{q.route}</td>
+                      <td className="px-5 py-3.5 text-sm font-bold text-[#0F2044]">{formatZAR(Number(q.price_zar))}</td>
+                      <td className="px-5 py-3.5 text-sm text-[#6B7280]">{new Date(q.created_at).toLocaleDateString()}</td>
+                      <td className="px-5 py-3.5">
+                        <span className="text-xs font-bold px-2 py-1 rounded-full" style={{ color: st.color, backgroundColor: st.bg }}>{st.label}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

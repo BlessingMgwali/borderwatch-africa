@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Eye, EyeOff, ChevronRight, ArrowLeft, CheckCircle, Truck, Package, Car, CreditCard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import { INDUSTRIES, DRIVER_ROUTES, CARGO_TYPES, TRUCK_TYPES, AFRICAN_COUNTRIES, SA_PROVINCES } from '../config/data';
 
 type UserType = 'transporter' | 'cargo_owner' | 'driver' | 'subscriber';
@@ -98,12 +99,13 @@ function StepBar({ step, total, label }: { step: number; total: number; label: s
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { signIn } = useAuth();
 
   const [userType, setUserType] = useState<UserType | null>(null);
   const [step, setStep] = useState(1);
   const [done, setDone] = useState(false);
   const [showPw, setShowPw] = useState(false);
+  const [regError, setRegError] = useState('');
 
   // Shared account fields
   const [name, setName] = useState('');
@@ -136,12 +138,37 @@ export default function RegisterPage() {
   const toggleArr = (arr: string[], setArr: (v: string[]) => void, val: string) =>
     setArr(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
+    setRegError('');
+    const role = userType === 'driver' ? 'driver'
+      : userType === 'cargo_owner' ? 'cargo_owner'
+      : 'transporter';
+
+    const meta: Record<string, string> = {
+      full_name: name,
+      role,
+      plan: userType === 'transporter' ? selectedPlan : 'starter',
+      company_name: companyName,
+      phone: phone,
+    };
+    if (userType === 'cargo_owner' && industry) meta.industry = industry;
+
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: { data: meta },
+    });
+
+    if (error) {
+      setRegError(error.message);
+      return;
+    }
+
+    // Sign in immediately after signup (email confirmation is off)
+    if (data.user) {
+      await signIn(email.trim(), password);
+    }
     setDone(true);
-    // Auto-login with demo accounts if matching
-    if (userType === 'driver') login('driver@test.com', 'driver123');
-    else if (userType === 'cargo_owner') login('shipper@test.com', 'shipper123');
-    else if (userType === 'transporter') login('company@test.com', 'company123');
   };
 
   if (!userType) {
