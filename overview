@@ -1,0 +1,981 @@
+Build BorderWatch Africa — a complete logistics intelligence 
+platform and freight marketplace for Southern Africa.
+This is a Progressive Web App (PWA) that works on 
+desktop and basic Android phones.
+
+═══════════════════════════════════════════════════
+TECH STACK
+═══════════════════════════════════════════════════
+
+React + TypeScript
+Tailwind CSS
+Framer Motion
+Lucide React icons
+Recharts
+React Router
+PWA manifest (offline support)
+Service Worker (cache reports when offline, sync when online)
+
+═══════════════════════════════════════════════════
+BRAND
+═══════════════════════════════════════════════════
+
+Name: BorderWatch Africa
+Tagline: "Move Freight Smarter."
+Colors:
+- Navy: #0F2044
+- Orange: #E85D24
+- Green: #1D9E75
+- Amber: #F2A623
+- Red: #E24B4A
+- White: #FFFFFF
+- Surface: #F8F9FA
+
+═══════════════════════════════════════════════════
+SECTION 1 — LANDING PAGE (/)
+═══════════════════════════════════════════════════
+
+Keep existing homepage exactly as built.
+It already includes:
+- Hero with map
+- Border status section
+- Fleet visibility section
+- Freight marketplace section
+- Analytics section
+- Testimonials
+- Footer
+
+ADD to homepage navigation:
+- "For Drivers" link (goes to /driver-info page)
+- "Marketplace" link (goes to /marketplace)
+
+═══════════════════════════════════════════════════
+SECTION 2 — REGISTRATION (/register)
+═══════════════════════════════════════════════════
+
+FIRST SCREEN — Role Selection:
+Full screen, centered, 4 large cards in a 2x2 grid.
+Heading: "Welcome to BorderWatch Africa"
+Sub: "Tell us how you will be using the platform"
+
+Card 1: 🚛 "I Move Freight"
+Sub: "Transport companies, fleet owners, 
+owner-operators and freight brokers"
+Color: Navy border
+[Get Started →]
+
+Card 2: 📦 "I Need Freight Moved"
+Sub: "Mining, agriculture, retail, construction,
+manufacturing and any business that ships goods"
+Color: Orange border
+[Get Started →]
+
+Card 3: 🚗 "I Am A Driver"
+Sub: "Report border conditions, update wait times,
+find return loads on your routes"
+Color: Green border
+[Get Started →]
+
+Card 4: 💼 "I Have A Subscription"
+Sub: "I already pay for a BorderWatch plan
+and want to access my full platform"
+Color: Gray border
+[Sign In →]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DRIVER REGISTRATION FLOW:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Step 1 — Personal Details:
+- Full name
+- Phone number (with +27 default country code)
+- ID number (South African ID or passport)
+- Profile photo (optional)
+
+Step 2 — Vehicle Details:
+- Truck registration number
+- Truck type:
+  Interlink/Superlink, Side tipper, Flatbed,
+  Reefer/Refrigerated, Tanker, Curtainsider,
+  Tautliner, Abnormal load, LDV/Bakkie, Other
+- Employer/Company (optional — "Independent" if none)
+
+Step 3 — Your Routes:
+Multi-select checkboxes:
+☐ JHB → Harare (via Beitbridge)
+☐ JHB → Lusaka (via Beitbridge/Chirundu)
+☐ JHB → Maputo (via Lebombo)
+☐ JHB → Gaborone (via Kopfontein)
+☐ JHB → Windhoek (via Nakop)
+☐ Durban → JHB
+☐ Cape Town → JHB
+☐ Durban → Maputo
+☐ Local routes only (within SA)
+☐ Other
+
+Step 4 — Consent:
+- Terms of Service checkbox (required)
+- POPIA consent checkbox (required)
+- "I confirm my details are accurate" checkbox
+- "Create Driver Account" orange button
+
+Note shown: "Your ID and truck registration 
+will be verified within 24 hours. 
+You can start reporting immediately."
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TRANSPORTER REGISTRATION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Step 1 — Account:
+- Full name, Email, Password, Phone
+
+Step 2 — Company:
+- Company name
+- Registration number (optional)
+- Country
+- Number of trucks: 1, 2-5, 6-10, 11-25, 26-50, 50+
+- Fleet type (multi-select):
+  Interlinks, Flatbeds, Reefers, Tankers, Mixed
+
+Step 3 — Choose Plan:
+Show pricing cards with commission tiers:
+Free: R0/month — 10% commission
+Professional: R499/month — 8% commission
+Business: R1,999/month — 6% commission
+Enterprise: Custom — 4% commission
+
+Step 4 — Consent + Create Account
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CARGO OWNER REGISTRATION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Step 1 — Account:
+- Full name, Email, Password, Phone
+
+Step 2 — Company:
+- Company name
+- Industry (dropdown):
+  Mining & Resources, Agriculture & Farming,
+  Food & Beverage, Retail & FMCG,
+  Construction & Infrastructure, Manufacturing,
+  Pharmaceutical & Medical, Government & NGO,
+  Oil & Gas, Timber & Forestry, Automotive,
+  Electronics & Technology, Chemicals,
+  Cold Chain & Perishables,
+  Import & Export (General), Other
+- Country
+- Typical monthly shipment volume:
+  1-5 shipments, 6-20, 21-50, 50+
+
+Step 3 — Shipment Preferences:
+- Typical routes (multi-select, same list)
+- Typical cargo types
+
+Step 4 — Consent + Create Account
+Note: "Free to post shipments. 
+BorderWatch charges 10% on confirmed bookings only."
+
+═══════════════════════════════════════════════════
+SECTION 3 — DRIVER DASHBOARD (/driver)
+═══════════════════════════════════════════════════
+
+MOBILE-FIRST DESIGN:
+- Minimum button height: 48px
+- Minimum font size: 16px
+- Works on basic Android phones
+- Bottom tab navigation (not sidebar)
+- Simple, fast, no clutter
+
+BOTTOM TAB BAR:
+🏠 Home | 📋 Report | 🚛 Loads | 👤 Profile
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HOME TAB:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Top: "Good morning, [Driver Name] 👋"
+Sub: Driver's usual routes shown
+
+BIG ORANGE BUTTON (most prominent element):
+"📋 REPORT BORDER CONDITION"
+Subtitle: "Help thousands of drivers — takes 30 seconds"
+
+Route Border Status Cards:
+For each of driver's usual routes show a card:
+Route: JHB → Harare
+Beitbridge: 🔴 SEVERE — 8h 20min
+"Last reported 6 min ago by 3 drivers"
+[Report Update]
+
+Points Balance Card:
+"🏆 Your Points: 340"
+"🥇 Rank: #12 this week"
+[View Leaderboard]
+
+Return Loads Available:
+"💰 3 loads available on your return route"
+JHB ← Harare: R8,400 available
+[View Loads]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REPORT TAB (most used feature):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Heading: "Report Border Condition"
+Sub: "Your reports help thousands of drivers"
+
+FAST REPORT FORM:
+
+Step 1 — Which border?
+Large dropdown, easy to tap:
+Beitbridge, Kazungula, Lebombo,
+Chirundu, Groblersbrug, Martins Drift,
+Ressano Garcia, Kopfontein, Other
+
+Step 2 — Current queue time?
+Large tap buttons (not small radio buttons):
+[Under 1 hour] [1-3 hours]
+[3-6 hours] [6-12 hours]
+[12+ hours]
+
+Step 3 — What is causing the delay?
+Multi-select chips (large, easy to tap):
+[System down] [Staff shortage]
+[Document issues] [High volume]
+[Random inspections] [Road condition]
+[Weather] [Strike/protest] [Other]
+
+Step 4 — Add photo (optional):
+"📷 Add Photo" button
+"Photo reports earn 15 points"
+
+Step 5 — Submit:
+"✅ Submit Report" big orange button
+
+AFTER SUBMIT — Success screen:
+Big checkmark animation
+"Report submitted! ✅"
+"You earned 10 points 🏆"
+"You are helping [X] drivers on this route"
+"Share to WhatsApp" button (shares border status)
+
+OFFLINE SUPPORT:
+If driver has no internet:
+"📵 No connection — your report will be 
+submitted automatically when you reconnect"
+Save report locally, sync when online.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LOADS TAB:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Show available loads on driver's usual routes.
+Filter: Local | Cross-Border
+Each load card shows:
+- Route (big, bold)
+- Cargo type + weight
+- Revenue (big, orange)
+- Pickup date
+- "Submit Quote" button
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROFILE TAB:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Driver profile card:
+- Photo/avatar
+- Name + verification badge
+- Truck registration
+- Routes
+- Points total + level:
+  Bronze (0-100), Silver (101-500),
+  Green (501-1000), Gold (1001+)
+- Report count: "89 border reports submitted"
+- Rating: ⭐ 4.8 (from cargo owners)
+
+Report history list:
+Date | Border | Status reported | Verified?
+3 Jun | Beitbridge | 8h | ✅ Verified
+2 Jun | Kazungula | 3h | ✅ Verified
+1 Jun | Beitbridge | 6h | ✅ Verified
+
+Settings:
+- Notification preferences
+- WhatsApp alerts on/off
+- Update routes
+- Sign out
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GAMIFICATION SYSTEM:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Points earned:
+- Border report submitted: +10 points
+- Report verified by 3+ others: +20 bonus
+- Photo included: +15 points
+- First report of day at a border: +25 points
+- Streak bonus (7 days reporting): +50 points
+
+Levels:
+Bronze: 0-100 points
+Silver: 101-500 points
+Green: 500-1000 points
+Gold: 1001+ points
+
+Leaderboard page shows:
+Top 10 drivers this week with points
+Driver's own rank highlighted
+
+Rewards (shown in profile, admin configures):
+500 points: 1 month free Professional
+1000 points: R50 airtime voucher
+2000 points: 3 months free Professional
+
+═══════════════════════════════════════════════════
+SECTION 4 — FREIGHT MARKETPLACE (/marketplace)
+═══════════════════════════════════════════════════
+
+This page is accessible to ALL users
+including those without a subscription.
+
+TOP TAB BAR:
+[🇿🇦 Local Deliveries] [🌍 Cross-Border]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LOCAL DELIVERIES TAB:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Filter bar:
+- From Province: Gauteng, Western Cape,
+  KwaZulu-Natal, Eastern Cape, Limpopo,
+  Mpumalanga, North West, Free State,
+  Northern Cape
+- To Province: same list
+- Cargo type, Weight range, Date, Budget range
+
+Load cards:
+Show industry badge color-coded:
+⛏️ Mining — dark gray
+🌾 Agriculture — green  
+🏗️ Construction — yellow
+🛒 Retail/FMCG — blue
+❄️ Cold Chain — light blue
+💊 Pharmaceutical — teal
+🏛️ Government — purple
+🛢️ Oil & Gas — dark orange
+
+Example local load cards:
+
+CARD 1:
+🛒 RETAIL/FMCG
+JHB (Gauteng) → Cape Town (Western Cape)
+General Cargo · 15 tons
+Pickup: Tomorrow 08:00
+Budget: R8,000 - R12,000
+Posted by: Retail Distribution Co
+Posted: 2 hours ago
+Commission: 10% (shown to transporters)
+[Submit Quote] [View Details]
+
+CARD 2:
+❄️ COLD CHAIN — URGENT 🔴
+JHB (Gauteng) → Durban (KwaZulu-Natal)
+Refrigerated Goods · 8 tons
+⚠️ Reefer truck required
+Pickup: Today 16:00 — URGENT
+Budget: R4,500 - R6,000
+[Submit Quote] [View Details]
+
+CARD 3:
+🏗️ CONSTRUCTION
+Polokwane (Limpopo) → JHB (Gauteng)
+Construction Materials · 22 tons
+Pickup: Friday
+Budget: R5,000 - R8,000
+[Submit Quote] [View Details]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CROSS-BORDER TAB:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Filter bar:
+- From Country, To Country
+- Cargo type, Weight, Date
+- Border preference
+
+Load cards same format but include:
+Border intelligence integration:
+"📍 Via Beitbridge — currently 🔴 8h wait
+✅ Via Kazungula — currently 🟡 3h wait (recommended)"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+POST A SHIPMENT:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+First ask:
+"Is this shipment local or cross-border?"
+[🇿🇦 Local — Within South Africa]
+[🌍 Cross-Border — SADC Countries]
+
+LOCAL FORM (4 steps):
+
+Step 1 — Cargo Details:
+- Shipment title
+- Cargo type dropdown:
+  General Cargo, Refrigerated Goods,
+  Mining Equipment, Agricultural Produce,
+  Construction Materials, Hazardous Materials,
+  Oversized Load, Bulk Liquid, Livestock,
+  Retail/FMCG, Pharmaceuticals, Other
+- Weight (tons)
+- Dimensions L x W x H (optional)
+- Special requirements (checkboxes):
+  ☐ Reefer/refrigerated truck
+  ☐ Hazmat certified driver
+  ☐ Abnormal load permit
+  ☐ Armed escort required
+  ☐ GPS tracking required
+  ☐ Insurance required
+
+Step 2 — Route:
+- Pickup province + city + address
+- Delivery province + city + address
+- Pickup date (date picker)
+- Delivery deadline (date picker)
+- Flexibility:
+  Exact date / Within 2 days /
+  Within a week / Flexible
+
+Step 3 — Budget & Preferences:
+- Budget range:
+  Under R5,000 / R5,000-R15,000 /
+  R15,000-R30,000 / R30,000-R60,000 /
+  R60,000+ / Open to quotes
+- Preferred carrier:
+  Any carrier / Verified carriers only /
+  Business Plan members only
+- Additional notes
+
+Step 4 — Review & Post:
+Summary of all details
+"Platform commission: BorderWatch charges 10%
+on confirmed shipment value"
+"Post Shipment" orange button
+
+CROSS-BORDER FORM:
+Same as local but adds:
+- From country + city
+- To country + city
+- Preferred border crossing (optional dropdown)
+- Documents ready? ☐ Commercial invoice
+  ☐ Packing list ☐ Bill of lading ☐ Customs cleared
+- Customs broker arranged? Yes/No
+
+AFTER POSTING — Success screen:
+"✅ Shipment Posted!
+Reference: BW-SHP-[auto number]
+Transporters are being notified now.
+You should receive quotes within 2-4 hours."
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+QUOTE SYSTEM:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+When transporter submits a quote:
+- Their price (ZAR)
+- Departure date/time
+- Estimated delivery date/time
+- Truck details (from their fleet)
+- Message to cargo owner
+- "Platform fee reminder: 10% deducted"
+- Submit button
+
+When cargo owner views quotes:
+Show all bids with:
+- Carrier name + star rating + review count
+- Verification badge if verified
+- Subscription plan badge
+- Price
+- Departure + ETA
+- Truck type
+- Message from carrier
+[Accept Quote] [Message Carrier] [Decline]
+
+ACCEPTANCE MODAL:
+"Confirm Shipment Booking
+Carrier: [Name]
+Route: [Route]
+Shipment value: R[amount]
+Platform fee (10%): -R[amount]
+Carrier receives: R[amount]
+BorderWatch receives: R[amount]
+[Confirm & Pay via PayFast] [Cancel]"
+
+COMMISSION TIERS:
+Free account: 10%
+Professional (R499): 8%
+Business (R1,999): 6%
+Enterprise (custom): 4%
+Show current rate on every booking confirmation
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RATINGS & REVIEWS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After delivery confirmed:
+Both sides prompted to rate:
+
+Cargo owner rates carrier:
+1-5 stars
+"Was the cargo delivered on time?"
+"Was the driver professional?"
+"Would you use this carrier again?"
+Written comment (optional)
+
+Carrier rates cargo owner:
+1-5 stars
+"Were documents ready on time?"
+"Was the cargo as described?"
+Written comment (optional)
+
+Ratings show on profiles.
+Minimum 3 ratings before score shows publicly.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DISPUTE RESOLUTION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+On any shipment, "Raise Dispute" button.
+Dispute form:
+- What happened?
+- Which party is at fault? Carrier / Shipper / Both
+- Evidence (photo upload)
+- What outcome do you want?
+
+Admin sees all disputes in /admin/disputes.
+Admin can: Resolve in favor of carrier/shipper,
+Issue partial refund, Suspend account.
+
+═══════════════════════════════════════════════════
+SECTION 5 — TRANSPORTER DASHBOARD (/dashboard)
+═══════════════════════════════════════════════════
+
+Keep all existing dashboard pages.
+ADD these new pages to sidebar:
+
+SHIPMENT REQUESTS page:
+All open shipment requests from cargo owners.
+Filter bar:
+- Route/destination
+- Weight range
+- Industry type
+- Departure date
+- Budget range
+- Local / Cross-border toggle
+
+Each request card:
+[Industry badge] [Local/Cross-border badge]
+Route: JHB → Lusaka
+Cargo: Mining Equipment · 32 tons
+Budget: R15,000 - R30,000
+Special: ⚠️ Hazmat certified required
+Pickup: Tomorrow
+Posted: 2h ago
+[Submit Quote] [Save for Later]
+
+MY QUOTES page:
+All quotes submitted by this transporter:
+BW-SHP-0234 | JHB→Lusaka | R18,400 | Pending
+BW-SHP-0198 | CT→Harare | R12,200 | Accepted ✅
+BW-SHP-0156 | DBN→JHB | R6,800 | Declined ❌
+
+ACTIVE SHIPMENTS page:
+Shipments currently in progress:
+BW-SHP-0198 | Cape Town → Harare
+Status: In Transit
+Driver: Peter Dube | BW-002
+Cargo: Agricultural · 15t
+ETA: Tomorrow 14:00
+Border: Beitbridge — 8h wait expected
+[Update Status] [Contact Shipper]
+
+EARNINGS page:
+This month:
+Shipments completed: 8
+Gross earnings: R142,000
+Platform commission (8%): -R11,360
+Net earnings: R130,640
+Pending payment: R18,400
+[Download Statement]
+
+═══════════════════════════════════════════════════
+SECTION 6 — CARGO OWNER DASHBOARD (/shipper)
+═══════════════════════════════════════════════════
+
+Sidebar:
+- Dashboard
+- Post a Shipment (orange, prominent)
+- My Shipments
+- Active Quotes
+- Shipment History
+- Payments
+- Settings
+
+DASHBOARD:
+"Good morning, [Name]"
+Company name + industry badge
+
+4 KPI cards:
+Active Shipments: 3
+Quotes Received: 12
+Completed This Month: 8
+Total Spent This Month: R84,200
+
+Quick action: "Post New Shipment +" orange button
+
+Recent activity feed:
+- Quote received from Ndlovu Transport — 5min ago
+- BW-SHP-0198 delivered — 2h ago
+- New quote from Copperbelt Hauliers — 3h ago
+
+MY SHIPMENTS page:
+Table with columns:
+Ref | Cargo | Route | Weight | Status | Quotes | Action
+
+BW-SHP-0234 | Mining Equipment |
+JHB→Lusaka | 32t | 🟡 3 quotes | ACTIVE | [View Quotes]
+
+BW-SHP-0198 | Agricultural |
+CT→Harare | 15t | Confirmed | IN TRANSIT | [Track]
+
+BW-SHP-0156 | General Cargo |
+DBN→Gaborone | 28t | Completed | R22,100 | [Invoice]
+
+ACTIVE QUOTES page:
+For each shipment show all received quotes.
+(Full detail as described in marketplace section)
+
+PAYMENTS page:
+Transaction history:
+BW-INV-0234 | Jun 2026 | R18,400 | Paid | [Download]
+BW-INV-0198 | May 2026 | R12,200 | Paid | [Download]
+Total spent: R84,200 this month
+
+═══════════════════════════════════════════════════
+SECTION 7 — TRUST & SAFETY
+═══════════════════════════════════════════════════
+
+VERIFICATION BADGES:
+Show on all profiles:
+✅ ID Verified (drivers)
+✅ Truck Registered (drivers)
+✅ Company Registered (transporters)
+✅ Business Plan Member (subscribers)
+⏳ Pending Verification
+
+REPORT VERIFICATION:
+A border report gets:
+"Unverified" — just submitted
+"Verified" — 3+ drivers reported same border
+"Highly Verified" — 5+ reports match
+Show verification level on border status cards
+
+DATA VALIDATION:
+- Rate limiting: max 5 reports per hour per driver
+- Location check: driver must be within 
+  50km of reported border (show warning if not)
+- Duplicate detection: same driver, same border,
+  same hour = rejected with message
+- Photo moderation flag for admin review
+
+POPIA/GDPR COMPLIANCE:
+On registration show consent modal:
+"BorderWatch Africa collects your data to:
+✓ Provide border intelligence services
+✓ Match freight opportunities
+✓ Verify your identity for trust and safety
+
+We do NOT sell your personal data.
+You can request deletion at any time.
+View our full Privacy Policy"
+[I Agree] required checkbox
+
+TERMS OF SERVICE:
+Show on registration.
+Key points visible:
+- Platform is not liable for shipment disputes
+- 10% commission on confirmed bookings
+- False reports = account suspension
+- Driver data used for border intelligence only
+
+AUDIT LOGS:
+Every action logged with timestamp:
+User ID | Action | Timestamp | IP address
+Visible to Super Admin only.
+
+═══════════════════════════════════════════════════
+SECTION 8 — SAAS SUBSCRIBER DASHBOARD
+═══════════════════════════════════════════════════
+
+Keep all existing dashboard pages.
+ADD marketplace access with commission badge:
+
+In sidebar add "Marketplace" section showing:
+Current commission rate based on plan:
+"Your rate: 8% (Professional Plan)"
+
+When subscriber posts or books on marketplace
+their subscription badge shows:
+"✅ Verified Professional Member"
+This increases trust from cargo owners.
+
+PLAN BENEFITS SHOWN IN DASHBOARD:
+Professional subscriber sees:
+"Your benefits:
+✅ 8% commission rate (vs 10% standard)
+✅ Priority listing in search results
+✅ Verified member badge
+✅ All 18 border posts
+✅ AI route intelligence
+✅ 5 vehicles tracked"
+
+═══════════════════════════════════════════════════
+SECTION 9 — SUPER ADMIN PANEL (/admin)
+═══════════════════════════════════════════════════
+
+Keep all existing admin pages.
+ADD these new sections:
+
+DRIVER MANAGEMENT (/admin/drivers):
+Table of all registered drivers:
+Name | Phone | ID Verified | Truck Reg | Routes | 
+Reports | Points | Status | Actions
+
+Actions per driver:
+[Verify ID] [Verify Truck] [Suspend] [View Reports]
+
+Points & Leaderboard management:
+- View top drivers by points
+- Award bonus points manually
+- Configure reward thresholds
+- Mark rewards as redeemed
+
+Report moderation:
+- All unmoderated reports queue
+- Flag suspicious reports
+- Ban drivers for false reporting
+- See report patterns per border
+
+MARKETPLACE MANAGEMENT (/admin/marketplace):
+- All active shipments (local + cross-border)
+- All pending quotes
+- Confirmed bookings
+- Disputed shipments
+- Revenue from commissions
+
+DISPUTE CENTER (/admin/disputes):
+All raised disputes:
+Ref | Parties | Issue | Amount | Status | Action
+[View] [Resolve: Carrier] [Resolve: Shipper] [Refund]
+
+BORDER INTELLIGENCE MANAGEMENT (/admin/borders):
+Manual override for each border:
+- Current status (override driver reports)
+- Add official notice
+- Add planned closure
+- Historical data view
+
+ANALYTICS ADDITIONS:
+
+Platform split:
+Local shipments: 34% | Cross-border: 66%
+
+Top local routes:
+JHB→Cape Town: 28%
+JHB→Durban: 22%
+Cape Town→JHB: 18%
+DBN→JHB: 14%
+
+Top cross-border routes:
+JHB→Harare: 31%
+JHB→Lusaka: 24%
+DBN→Maputo: 18%
+
+Industry breakdown (pie chart):
+Mining 28%, Agriculture 22%,
+Retail 18%, Construction 12%, Other 20%
+
+Driver activity:
+Active drivers today: 142
+Border reports today: 89
+Most active driver this week: [name]
+Most reported border: Beitbridge (47 reports)
+Report accuracy rate: 94%
+
+Revenue breakdown:
+SaaS subscriptions: R48,431
+Local freight commission: R12,400
+Cross-border commission: R18,200
+Advertising: R8,000
+Total MRR: R87,031
+
+GOVERNMENT/PARTNERSHIP REPORTS (/admin/reports):
+Export options for authorities:
+- Border delay report (PDF/CSV)
+  Shows: average wait times by border, by date
+- Freight movement report
+  Shows: volume by corridor, cargo types
+- Driver activity report
+  Shows: verified driver counts, report volumes
+- Platform audit log export
+
+Professional branding on all exports:
+BorderWatch Africa letterhead
+"Data prepared for: [authority name]"
+"Report period: [date range]"
+"Certified accurate as of: [date]"
+
+═══════════════════════════════════════════════════
+SECTION 10 — TECHNICAL REQUIREMENTS
+═══════════════════════════════════════════════════
+
+PWA SETUP:
+Add manifest.json:
+{
+  "name": "BorderWatch Africa",
+  "short_name": "BorderWatch",
+  "theme_color": "#0F2044",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/",
+  "icons": [various sizes]
+}
+
+Add service worker for:
+- Offline report queuing
+- Cache border status data
+- Sync when back online
+Show banner: "Add to Home Screen" on mobile
+
+OFFLINE SUPPORT:
+Driver border reports:
+- Save to localStorage if offline
+- Show "Queued — will send when online"
+- Auto-sync when connection returns
+- Show sync confirmation
+
+PUSH NOTIFICATIONS:
+When border status changes: notify subscribers
+When new load matches route: notify transporters
+When quote received: notify cargo owners
+When shipment accepted: notify carrier
+
+WHATSAPP ALERTS:
+Show WhatsApp share button on:
+- Border status updates
+- New load matches
+- Shipment confirmations
+
+Format: "🔴 BEITBRIDGE ALERT: 8h 20min wait.
+Route via Kazungula recommended.
+BorderWatch Africa — borderwatchafrica.co.za"
+
+PAYMENT INTEGRATION:
+PayFast for South African users
+Ozow as alternative (instant EFT)
+Store config in:
+const PAYMENT_CONFIG = {
+  currency: 'ZAR',
+  commissionRate: 0.10,
+  commissionByPlan: {
+    free: 0.10,
+    professional: 0.08,
+    business: 0.06,
+    enterprise: 0.04,
+  },
+  sandbox: true,
+}
+
+PRICING CONFIG (easily editable):
+const PRICING = {
+  starter:      { monthly: 0,    annual: 0    },
+  professional: { monthly: 499,  annual: 399  },
+  business:     { monthly: 1999, annual: 1599 },
+}
+
+ERROR HANDLING:
+- All forms show inline validation errors
+- Network errors show retry option
+- Loading states on all data fetches
+- Empty states with helpful messages
+
+ANALYTICS:
+Add Google Analytics tracking on:
+- Registration completions by role
+- Marketplace load views
+- Quote submissions
+- Border report submissions
+
+TEST ACCOUNTS:
+admin@borderwatch.africa / admin123 → Super Admin
+company@test.com / company123 → Transporter (Business Plan)
+shipper@test.com / shipper123 → Cargo Owner (Mining)
+driver@test.com / driver123 → Driver (Gold level)
+owner@borderwatch.africa / owner123 → Platform Owner
+
+═══════════════════════════════════════════════════
+SECTION 11 — ADDITIONAL PAGES
+═══════════════════════════════════════════════════
+
+/driver-info — Landing page for drivers:
+"Earn While You Drive 🚛"
+Explain the points system, rewards, 
+how to join, what it takes.
+"Download the App" / "Register as Driver" CTA
+
+/advertise — Advertising packages page:
+const AD_PRICING = {
+  featuredLoad: 299,
+  featuredTruck: 199,
+  borderBanner: 1500,
+  sponsoredAlert: 500,
+  homepageFeature: 5000,
+}
+
+/about — Keep existing about page
+
+/pricing — Keep existing pricing page
+Add note: "All marketplace users pay 
+10% commission on completed shipments only.
+No subscription required to use the marketplace."
+
+GLOBAL FOOTER ADDITION:
+Add links: Driver Program | Advertise | 
+Partnership Inquiries | Data & API
+
+═══════════════════════════════════════════════════
+SECTION 12 — AI INTELLIGENCE (/admin/intelligence)
+═══════════════════════════════════════════════════
+
+Super Admin only.
+Keep full AI panel as previously specified.
+Connect to Anthropic Claude API.
+Store key in .env as VITE_ANTHROPIC_API_KEY
+
+System prompt includes all platform data:
+- Driver report patterns
+- Border congestion trends
+- Revenue by stream
+- Churn risk companies
+- Marketplace performance
+- Local vs cross-border splits
+
+Pre-built questions include:
+[Which borders need attention today?]
+[Which companies risk churning?]
+[What is my revenue trend?]
+[Which industry posts most shipments?]
+[Which drivers are most reliable?]
+[Show me this week's marketplace performance]
