@@ -3,7 +3,7 @@ import { Session } from '@supabase/supabase-js';
 import { supabase, Profile } from '../lib/supabase';
 
 // Keep role type exported for use across dashboards
-export type Role = 'superadmin' | 'transporter' | 'cargo_owner' | 'driver';
+export type Role = 'superadmin' | 'transporter' | 'cargo_owner' | 'driver' | 'owner';
 
 // Unified user type that works like the old User type but maps to Profile
 export type User = Profile & {

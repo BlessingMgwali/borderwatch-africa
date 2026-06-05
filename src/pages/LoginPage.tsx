@@ -6,16 +6,18 @@ import { useAuth } from '../context/AuthContext';
 
 const ROLE_ROUTES: Record<string, string> = {
   superadmin: '/admin',
+  owner: '/dashboard',
   transporter: '/dashboard',
   cargo_owner: '/shipper',
   driver: '/driver',
 };
 
 const DEMO_ACCOUNTS = [
-  { email: 'admin@borderwatch.africa', password: 'admin123', role: 'Super Admin', color: '#0F2044' },
-  { email: 'company@test.com', password: 'company123', role: 'Transporter', color: '#E85D24' },
-  { email: 'shipper@test.com', password: 'shipper123', role: 'Cargo Owner', color: '#1D9E75' },
-  { email: 'driver@test.com', password: 'driver123', role: 'Driver', color: '#F2A623' },
+  { email: 'admin@borderwatch.africa', password: 'Admin@2024', role: 'Super Admin', color: '#0F2044' },
+  { email: 'company@test.com', password: 'Company@2024', role: 'Transporter', color: '#E85D24' },
+  { email: 'shipper@test.com', password: 'Shipper@2024', role: 'Cargo Owner', color: '#1D9E75' },
+  { email: 'driver@test.com', password: 'Driver@2024', role: 'Driver', color: '#F2A623' },
+  { email: 'owner@borderwatch.africa', password: 'Owner@2024', role: 'Owner', color: '#7C3AED' },
 ];
 
 export default function LoginPage() {

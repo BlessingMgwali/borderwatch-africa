@@ -9,7 +9,7 @@ export type Profile = {
   id: string;
   full_name: string;
   phone: string | null;
-  role: 'superadmin' | 'transporter' | 'cargo_owner' | 'driver';
+  role: 'superadmin' | 'transporter' | 'cargo_owner' | 'driver' | 'owner';
   company_id: string | null;
   company_name: string | null;
   plan: 'starter' | 'professional' | 'business' | 'enterprise';
